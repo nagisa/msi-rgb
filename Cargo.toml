@@ -1,0 +1,8 @@
+[package]
+name = "msi-rgb"
+version = "0.1.0"
+authors = ["Simonas Kazlauskas <git@kazlauskas.me>"]
+
+[dependencies]
+clap = "2.23"
+error-chain = "0.10"

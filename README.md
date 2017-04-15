@@ -45,7 +45,7 @@ Run following for more options:
 sudo ./target/release/msi-rgb 206487a9 206487a9 10325476 -ir -ig -ib -d 5
 ```
 
-(gif soon)
+[![animation of pulse](https://thumbs.gfycat.com/BlueWhichAntbear-size_restricted.gif)](https://gfycat.com/BlueWhichAntbear)
 
 ## Police
 
@@ -53,7 +53,7 @@ sudo ./target/release/msi-rgb 206487a9 206487a9 10325476 -ir -ig -ib -d 5
 sudo ./target/release/msi-rgb -d15 FF00FF00 0 00FF00FF
 ```
 
-(gif soon)
+[![animation of police](https://thumbs.gfycat.com/RemoteChiefBobolink-size_restricted.gif)](https://gfycat.com/RemoteChiefBobolink)
 
 ## Happy Easter
 
@@ -63,7 +63,7 @@ sudo ./target/release/msi-rgb -d15 FF00FF00 0 00FF00FF
 sudo ./target/release/msi-rgb 58e01c0d 504fdcb9 e4aa75eb --blink 2 -d 32
 ```
 
-(gif soon)
+[![animation of happyeaster](https://thumbs.gfycat.com/DirectBleakBuzzard-size_restricted.gif)](https://gfycat.com/DirectBleakBuzzard)
 
 # License
 

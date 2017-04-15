@@ -1,10 +1,10 @@
 Utility for controlling RGB header on MSI boards
 
+[How this utility came to be](http://kazlauskas.me/entries/i-reverse-engineered-a-motherboard.html)
+
 This utility not only works on any linux system you find around, it also is much more flexible than
 the 7 colours MSI’s own Gaming App. Futhermore, unlike the MSI’s utility, this does not make your
 system vulnerable to anybody who cares to fiddle around the system.
-
-See this blog (link incoming later) post for details on how this app came to be
 
 * Only UNIX where /dev/port matches the behaviour of Linux’s /dev/port (might work on WSL?);
 * Only MSI motherboards with NCT6795D super I/O chip;

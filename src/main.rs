@@ -26,12 +26,6 @@ fn outb(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
     Ok(())
 }
 
-fn inb(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
-    f.seek(io::SeekFrom::Start(cell as _))?;
-    f.write(&[data])?;
-    Ok(())
-}
-
 fn write_byte_to_cell(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
     outb(f, PORT1, 0x87)?;
     outb(f, PORT1, 0x07)?;
@@ -47,7 +41,7 @@ fn write_colour(f: &mut fs::File, cell_offset: u8, data: u32) -> io::Result<()> 
     write_byte_to_cell(f, cell_offset + 3, data as u8)
 }
 
-fn run<'a>(mut matches: ArgMatches<'a>) -> Result<()> {
+fn run<'a>(matches: ArgMatches<'a>) -> Result<()> {
     let mut f = fs::OpenOptions::new().read(true).write(true).open("/dev/port")
         .chain_err(|| { "could not open /dev/port; try sudo?" })?;
     let disable = matches.is_present("DISABLE");

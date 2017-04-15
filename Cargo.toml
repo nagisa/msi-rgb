@@ -2,6 +2,8 @@
 name = "msi-rgb"
 version = "0.1.0"
 authors = ["Simonas Kazlauskas <git@kazlauskas.me>"]
+description = "Utility for controlling RGB header on some MSI boards"
+license = "ISC"
 
 [dependencies]
 clap = "2.23"

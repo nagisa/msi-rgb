@@ -65,6 +65,11 @@ sudo ./target/release/msi-rgb 58e01c0d 504fdcb9 e4aa75eb --blink 2 -d 32
 
 [![animation of happyeaster](https://thumbs.gfycat.com/DirectBleakBuzzard-size_restricted.gif)](https://gfycat.com/DirectBleakBuzzard)
 
+# Implementation
+
+For implementation details, including the registers used by super I/O and their meanings see the
+comment in the `src/main.rs` file.
+
 # License
 
 Code is licensed under the permissive ISC license. If you create derivative works and/or nice RGB

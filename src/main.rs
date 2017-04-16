@@ -1,3 +1,42 @@
+//! Utility for controlling RGB header on MSI boards
+//!
+//! The RGB header is controlled by the NCT6795D Super I/O chip. It seems like the "bank" is
+//! enabled by writing `87 07` to the PORT port (0x4e) and then `12` to the DATA port (0x4f).
+//!
+//! This bank then looks like this:
+//!
+//! 00 |  ...
+//! 10 |  ...
+//! .  |
+//! .  |
+//! .  |
+//! E0 | XX XX XX XX  PX XX XX XX  XX XX XX XX  XX XX XX XX
+//! F0 | RR RR RR RR  GG GG GG GG  BB BB BB BB  XX XX TT TX
+//!     --------------------------------------------------
+//!      00 01 02 03  04 05 06 07  08 09 0A 0B  0C 0D 0E 0F
+//!
+//! Here:
+//!
+//! `RR` - intensity of the red colour
+//! `GG` - intensity of the green colour
+//! `BB` - intensity of the blue colour
+//!
+//! There’s 4 distinct colours that can be specified, hence the four instances of `RR`, `GG` and
+//! `BB`. These colours change every given interval specified in the `TTT` bytes. TTT has the
+//! bit format like this: `bgrdt tttt tttt`
+//!
+//! Here `t` bits are a duration between changes from one colour to another (takes the next column
+//! of RR GG BB);
+//!
+//! `d` bit specifies whether the RGB header is turned on (distinct from the motherboard lights).;
+//!
+//! `bgr` bits make 8 colour steps available, halving the bit-depth to 4 and also inverting the
+//! intensity (`F` is 0%, `0` is 100%) for blue, green and red channels respectively.
+//!
+//! `P` here is another bitmask of the form `pbbb`, where `p` specifies whether smooth pulsing
+//! behaviour is enabled. `bbb` specifies duration between blinks. If `bbb` is `001`,
+//! all lightning is turned off, including the one on the motherboard itself. `000` is always on.
+
 extern crate clap;
 #[macro_use]
 extern crate error_chain;

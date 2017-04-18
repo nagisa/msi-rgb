@@ -17,21 +17,21 @@
 //!
 //! Here:
 //!
-//! `RR` - intensity of the red colour
-//! `GG` - intensity of the green colour
-//! `BB` - intensity of the blue colour
+//! `R` - intensity of the red colour
+//! `G` - intensity of the green colour
+//! `B` - intensity of the blue colour
 //!
-//! There’s 4 distinct colours that can be specified, hence the four instances of `RR`, `GG` and
-//! `BB`. These colours change every given interval specified in the `TTT` bytes. TTT has the
-//! bit format like this: `bgrdt tttt tttt`
+//! There’s 8 distinct steps that can be specified, hence the four instances of `RR`, `GG` and
+//! `BB`. These colours change every given interval specified in the `TTT` bytes. TTT has the bit
+//! format like this: `bgrdt tttt tttt`
 //!
 //! Here `t` bits are a duration between changes from one colour to another (takes the next column
 //! of RR GG BB);
 //!
 //! `d` bit specifies whether the RGB header is turned on (distinct from the motherboard lights).;
 //!
-//! `bgr` bits make 8 colour steps available, halving the bit-depth to 4 and also inverting the
-//! intensity (`F` is 0%, `0` is 100%) for blue, green and red channels respectively.
+//! `bgr` invert the intensity (`F` is 0%, `0` is 100%) for blue, green and red channels
+//! respectively.
 //!
 //! `P` here is another bitmask of the form `pbbb`, where `p` specifies whether smooth pulsing
 //! behaviour is enabled. `bbb` specifies duration between blinks. If `bbb` is `001`,

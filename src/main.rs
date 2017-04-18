@@ -67,6 +67,7 @@ fn outb(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
 
 fn write_byte_to_cell(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
     outb(f, PORT1, 0x87)?;
+    outb(f, PORT1, 0x87)?;
     outb(f, PORT1, 0x07)?;
     outb(f, PORT2, 0x12)?;
     outb(f, PORT1, cell)?;

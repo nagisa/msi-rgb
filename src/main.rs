@@ -125,7 +125,7 @@ fn main() {
              .help("values of blue colour (32 bit hex number, up to FFFFFFFF)"))
         .arg(Arg::with_name("INVHALF").long("invert").short("i").multiple(true)
              .takes_value(true).possible_values(&["r","g","b"])
-             .help("invert the specified channel(s) and halve their bit depth (=8 distinct steps)"))
+             .help("invert the specified channel(s)"))
         .arg(Arg::with_name("PULSE").long("pulse").short("p")
              .help("smooth pulsing"))
         .arg(Arg::with_name("STEPDURATION").long("duration").short("d").takes_value(true)

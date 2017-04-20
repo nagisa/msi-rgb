@@ -1,9 +1,9 @@
 //! Utility for controlling RGB header on MSI boards
 //!
-//! The RGB header is controlled by the NCT6795D Super I/O chip. It seems like the "bank" is
-//! enabled by writing `87 07` to the PORT port (0x4e) and then `12` to the DATA port (0x4f).
+//! The RGB header is controlled by the NCT6795D Super I/O chip.
 //!
-//! This bank then looks like this:
+//! The Advanced "mode" is enabled by writing 87 87 to PORT 1. It is later disabled by writing AA
+//! to that same port. `07 12` then selects the bank 12h. This bank then looks like this:
 //!
 //! 00 |  ...
 //! 10 |  ...
@@ -66,10 +66,6 @@ fn outb(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
 }
 
 fn write_byte_to_cell(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
-    outb(f, PORT1, 0x87)?;
-    outb(f, PORT1, 0x87)?;
-    outb(f, PORT1, 0x07)?;
-    outb(f, PORT2, 0x12)?;
     outb(f, PORT1, cell)?;
     outb(f, PORT2, data)
 }
@@ -94,6 +90,13 @@ fn run<'a>(matches: ArgMatches<'a>) -> Result<()> {
                                .parse::<u16>()?;
     let invs = matches.values_of("INVHALF").map(|i| i.collect()).unwrap_or(Vec::new());
 
+    // Enable the advanced mode.
+    outb(&mut f, PORT1, 0x87)?;
+    outb(&mut f, PORT1, 0x87)?;
+    // Select the 12th bank.
+    outb(&mut f, PORT1, 0x07)?;
+    outb(&mut f, PORT2, 0x12)?;
+
     let e4_val = if disable { 1 } else { 0 } |
                  if pulse { 0b1000 } else { 0 } |
                  if flash == 0 { 0 } else { (flash + 1) & 0b111 };
@@ -109,6 +112,9 @@ fn run<'a>(matches: ArgMatches<'a>) -> Result<()> {
                  if invs.contains(&"g") { 0b01000 } else { 0 } |
                  if invs.contains(&"r") { 0b00100 } else { 0 };
     write_byte_to_cell(&mut f, 0xff, ff_val)?;
+
+    // Disable the advanced mode.
+    outb(&mut f, PORT1, 0xAA)?;
     Ok(())
 }
 

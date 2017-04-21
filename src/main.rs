@@ -41,7 +41,7 @@ extern crate clap;
 #[macro_use]
 extern crate error_chain;
 
-use std::io::{self, Seek, Write};
+use std::io::{self, Seek, Write, Read};
 use std::fs;
 use clap::{Arg, App, ArgMatches};
 
@@ -54,10 +54,22 @@ error_chain! {
 
 const PORT1: u8 = 0x4e;
 const PORT2: u8 = 0x4f;
+const RGB_BANK: u8 = 0x12;
+const NCT6795D_MASK: u16 = 0xD350;
 
+
+const REG_DEVID_MSB: u8 = 0x20;
+const REG_DEVID_LSB: u8 = 0x21;
 const REDCELL: u8 = 0xf0;
 const GREENCELL: u8 = 0xf4;
 const BLUECELL: u8 = 0xf8;
+
+fn inb(f: &mut fs::File, cell: u8) -> io::Result<u8> {
+    let mut d = [0u8];
+    f.seek(io::SeekFrom::Start(cell as _))?;
+    f.read(&mut d)?;
+    Ok(d[0])
+}
 
 fn outb(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
     f.seek(io::SeekFrom::Start(cell as _))?;
@@ -82,6 +94,7 @@ fn run<'a>(matches: ArgMatches<'a>) -> Result<()> {
         .chain_err(|| { "could not open /dev/port; try sudo?" })?;
     let disable = matches.is_present("DISABLE");
     let pulse = matches.is_present("PULSE");
+    let ignore = matches.is_present("IGNORE_CHECK");
     let flash = matches.value_of("BLINK").expect("bug: BLINK argument").parse::<u8>()?;
     let red = u32::from_str_radix(matches.value_of("RED").expect("bug: RED argument"), 16)?;
     let green = u32::from_str_radix(matches.value_of("GREEN").expect("bug: GREEN argument"), 16)?;
@@ -93,9 +106,24 @@ fn run<'a>(matches: ArgMatches<'a>) -> Result<()> {
     // Enable the advanced mode.
     outb(&mut f, PORT1, 0x87)?;
     outb(&mut f, PORT1, 0x87)?;
-    // Select the 12th bank.
+
+    // Check if indeed a NCT6795D
+    if !ignore {
+        outb(&mut f, PORT1, REG_DEVID_MSB)?;
+        let msb = inb(&mut f, PORT2)?;
+        outb(&mut f, PORT1, REG_DEVID_LSB)?;
+        let ident = (msb as u16) << 8 | inb(&mut f, PORT2)? as u16;
+        if ident & 0xFFF0 != NCT6795D_MASK {
+            let err: Result<()> = Err("`--ignore-check` flag, which would skip the check, \
+                                       is not specified (may be dangerous)".into());
+            return err.chain_err(|| format!("The sI/O chip identifies as {:x}, which does not \
+                                            seem to be NCT6795D", ident));
+        }
+    }
+
+    // Select the 0x12th bank.
     outb(&mut f, PORT1, 0x07)?;
-    outb(&mut f, PORT2, 0x12)?;
+    outb(&mut f, PORT2, RGB_BANK)?;
 
     let e4_val = if disable { 1 } else { 0 } |
                  if pulse { 0b1000 } else { 0 } |
@@ -145,10 +173,12 @@ fn main() {
              .help("duration between blinks (from 0 to 6, 0 is always on, 6 is slowest)"))
         .arg(Arg::with_name("DISABLE").long("disable").short("x")
              .help("disable the RGB subsystem altogether"))
+        .arg(Arg::with_name("IGNORE_CHECK").long("ignore-check")
+             .help("ignore the result of sI/O identification check"))
         .get_matches();
 
     ::std::process::exit(if let Err(e) = run(matches) {
-        let _ = writeln!(::std::io::stderr(), " {}", e);
+        let _ = writeln!(::std::io::stderr(), "error: {}", e);
         for e in e.iter().skip(1) {
             let _ = writeln!(::std::io::stderr(), "    caused by: {}", e);
         }

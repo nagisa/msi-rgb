@@ -52,8 +52,6 @@ error_chain! {
     }
 }
 
-const PORT1: u8 = 0x4e;
-const PORT2: u8 = 0x4f;
 const RGB_BANK: u8 = 0x12;
 const NCT6795D_MASK: u16 = 0xD350;
 
@@ -64,35 +62,35 @@ const REDCELL: u8 = 0xf0;
 const GREENCELL: u8 = 0xf4;
 const BLUECELL: u8 = 0xf8;
 
-fn inb(f: &mut fs::File, cell: u8) -> io::Result<u8> {
+fn inb(f: &mut fs::File, port: u16) -> io::Result<u8> {
     let mut d = [0u8];
-    f.seek(io::SeekFrom::Start(cell as _))?;
+    f.seek(io::SeekFrom::Start(port.into()))?;
     f.read(&mut d)?;
     Ok(d[0])
 }
 
-fn outb(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
-    f.seek(io::SeekFrom::Start(cell as _))?;
+fn outb(f: &mut fs::File, port: u16, data: u8) -> io::Result<()> {
+    f.seek(io::SeekFrom::Start(port.into()))?;
     f.write(&[data])?;
     Ok(())
 }
 
-fn write_byte_to_cell(f: &mut fs::File, cell: u8, data: u8) -> io::Result<()> {
-    outb(f, PORT1, cell)?;
-    outb(f, PORT2, data)
+fn write_byte_to_cell(f: &mut fs::File, base_port: u16, cell: u8, data: u8) -> io::Result<()> {
+    outb(f, base_port, cell)?;
+    outb(f, base_port + 1, data)
 }
 
-fn write_colour(f: &mut fs::File, cell_offset: u8, data: u32) -> io::Result<()> {
-    write_byte_to_cell(f, cell_offset, (data >> 24) as u8)?;
-    write_byte_to_cell(f, cell_offset + 1, (data >> 16) as u8)?;
-    write_byte_to_cell(f, cell_offset + 2, (data >> 8) as u8)?;
-    write_byte_to_cell(f, cell_offset + 3, data as u8)
+fn write_colour(f: &mut fs::File, base_port: u16, cell_offset: u8, data: u32) -> io::Result<()> {
+    write_byte_to_cell(f, base_port, cell_offset, (data >> 24) as u8)?;
+    write_byte_to_cell(f, base_port, cell_offset + 1, (data >> 16) as u8)?;
+    write_byte_to_cell(f, base_port, cell_offset + 2, (data >> 8) as u8)?;
+    write_byte_to_cell(f, base_port, cell_offset + 3, data as u8)
 }
 
-fn run<'a>(f: &mut fs::File, matches: ArgMatches<'a>) -> Result<()> {
+fn run<'a>(f: &mut fs::File, base_port: u16, matches: ArgMatches<'a>) -> Result<()> {
     let disable = matches.is_present("DISABLE");
     let pulse = matches.is_present("PULSE");
-    let ignore = matches.is_present("IGNORE_CHECK");
+    let ignore = matches.is_present("IGNORECHECK");
     let flash = matches.value_of("BLINK").expect("bug: BLINK argument").parse::<u8>()?;
     let red = u32::from_str_radix(matches.value_of("RED").expect("bug: RED argument"), 16)?;
     let green = u32::from_str_radix(matches.value_of("GREEN").expect("bug: GREEN argument"), 16)?;
@@ -103,51 +101,55 @@ fn run<'a>(f: &mut fs::File, matches: ArgMatches<'a>) -> Result<()> {
 
     // Check if indeed a NCT6795D
     if !ignore {
-        outb(f, PORT1, REG_DEVID_MSB)?;
-        let msb = inb(f, PORT2)?;
-        outb(f, PORT1, REG_DEVID_LSB)?;
-        let ident = (msb as u16) << 8 | inb(f, PORT2)? as u16;
+        outb(f, base_port, REG_DEVID_MSB)?;
+        let msb = inb(f, base_port + 1)?;
+        outb(f, base_port, REG_DEVID_LSB)?;
+        let ident = (msb as u16) << 8 | inb(f, base_port + 1)? as u16;
         if ident & 0xFFF0 != NCT6795D_MASK {
             let err: Result<()> = Err("`--ignore-check` flag, which would skip the check, \
-                                       is not specified (may be dangerous)".into());
+                                       is not specified (may be dangerous); \
+                                       also try `--base-port`".into());
             return err.chain_err(|| format!("The sI/O chip identifies as {:x}, which does not \
                                             seem to be NCT6795D", ident));
         }
     }
 
     // Select the 0x12th bank.
-    outb(f, PORT1, 0x07)?;
-    outb(f, PORT2, RGB_BANK)?;
+    outb(f, base_port, 0x07)?;
+    outb(f, base_port + 1, RGB_BANK)?;
 
     let e4_val = if disable { 1 } else { 0 } |
                  if pulse { 0b1000 } else { 0 } |
                  if flash == 0 { 0 } else { (flash + 1) & 0b111 };
-    write_byte_to_cell(f, 0xe4, e4_val)?;
-    write_colour(f, REDCELL, red)?;
-    write_colour(f, GREENCELL, green)?;
-    write_colour(f, BLUECELL, blue)?;
+    write_byte_to_cell(f, base_port, 0xe4, e4_val)?;
+    write_colour(f, base_port, REDCELL, red)?;
+    write_colour(f, base_port, GREENCELL, green)?;
+    write_colour(f, base_port, BLUECELL, blue)?;
 
-    write_byte_to_cell(f, 0xfe, step_duration as u8)?;
+    write_byte_to_cell(f, base_port, 0xfe, step_duration as u8)?;
     let ff_val = (step_duration >> 8) as u8 & 1 |
                  0b10 | // if 0 disable lights on rgb header only, not on board
                  if invs.contains(&"b") { 0b10000 } else { 0 } |
                  if invs.contains(&"g") { 0b01000 } else { 0 } |
                  if invs.contains(&"r") { 0b00100 } else { 0 };
-    write_byte_to_cell(f, 0xff, ff_val)?;
+    write_byte_to_cell(f, base_port, 0xff, ff_val)?;
 
     Ok(())
 }
 
 /// Wrapper which enables and disables the advanced mode
 fn run_wrap<'a>(matches: ArgMatches<'a>) -> Result<()> {
+    let base_port = u16::from_str_radix(matches.value_of("BASEPORT")
+                                               .expect("bug: BASEPORT argument"), 16)?;
+
     let mut f = fs::OpenOptions::new().read(true).write(true).open("/dev/port")
         .chain_err(|| { "could not open /dev/port; try sudo?" })?;
     // Enable the advanced mode.
-    outb(&mut f, PORT1, 0x87).chain_err(|| "could not enable advanced mode")?;
-    outb(&mut f, PORT1, 0x87).chain_err(|| "could not enable advanced mode")?;
-    let r = run(&mut f, matches);
+    outb(&mut f, base_port, 0x87).chain_err(|| "could not enable advanced mode")?;
+    outb(&mut f, base_port, 0x87).chain_err(|| "could not enable advanced mode")?;
+    let r = run(&mut f, base_port, matches);
     // Disable the advanced mode.
-    outb(&mut f, PORT1, 0xAA).chain_err(|| "could not disable advanced mode")?;
+    outb(&mut f, base_port, 0xAA).chain_err(|| "could not disable advanced mode")?;
     r.chain_err(|| "could not set the colour")
 }
 
@@ -178,8 +180,10 @@ fn main() {
              .help("duration between blinks (from 0 to 6, 0 is always on, 6 is slowest)"))
         .arg(Arg::with_name("DISABLE").long("disable").short("x")
              .help("disable the RGB subsystem altogether"))
-        .arg(Arg::with_name("IGNORE_CHECK").long("ignore-check")
+        .arg(Arg::with_name("IGNORECHECK").long("ignore-check")
              .help("ignore the result of sI/O identification check"))
+        .arg(Arg::with_name("BASEPORT").long("base-port").default_value("4e")
+             .help("base port to use. Values known to be in use are 4e and 2e"))
         .get_matches();
 
     ::std::process::exit(if let Err(e) = run_wrap(matches) {

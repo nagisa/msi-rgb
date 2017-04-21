@@ -89,9 +89,7 @@ fn write_colour(f: &mut fs::File, cell_offset: u8, data: u32) -> io::Result<()> 
     write_byte_to_cell(f, cell_offset + 3, data as u8)
 }
 
-fn run<'a>(matches: ArgMatches<'a>) -> Result<()> {
-    let mut f = fs::OpenOptions::new().read(true).write(true).open("/dev/port")
-        .chain_err(|| { "could not open /dev/port; try sudo?" })?;
+fn run<'a>(f: &mut fs::File, matches: ArgMatches<'a>) -> Result<()> {
     let disable = matches.is_present("DISABLE");
     let pulse = matches.is_present("PULSE");
     let ignore = matches.is_present("IGNORE_CHECK");
@@ -103,16 +101,12 @@ fn run<'a>(matches: ArgMatches<'a>) -> Result<()> {
                                .parse::<u16>()?;
     let invs = matches.values_of("INVHALF").map(|i| i.collect()).unwrap_or(Vec::new());
 
-    // Enable the advanced mode.
-    outb(&mut f, PORT1, 0x87)?;
-    outb(&mut f, PORT1, 0x87)?;
-
     // Check if indeed a NCT6795D
     if !ignore {
-        outb(&mut f, PORT1, REG_DEVID_MSB)?;
-        let msb = inb(&mut f, PORT2)?;
-        outb(&mut f, PORT1, REG_DEVID_LSB)?;
-        let ident = (msb as u16) << 8 | inb(&mut f, PORT2)? as u16;
+        outb(f, PORT1, REG_DEVID_MSB)?;
+        let msb = inb(f, PORT2)?;
+        outb(f, PORT1, REG_DEVID_LSB)?;
+        let ident = (msb as u16) << 8 | inb(f, PORT2)? as u16;
         if ident & 0xFFF0 != NCT6795D_MASK {
             let err: Result<()> = Err("`--ignore-check` flag, which would skip the check, \
                                        is not specified (may be dangerous)".into());
@@ -122,28 +116,39 @@ fn run<'a>(matches: ArgMatches<'a>) -> Result<()> {
     }
 
     // Select the 0x12th bank.
-    outb(&mut f, PORT1, 0x07)?;
-    outb(&mut f, PORT2, RGB_BANK)?;
+    outb(f, PORT1, 0x07)?;
+    outb(f, PORT2, RGB_BANK)?;
 
     let e4_val = if disable { 1 } else { 0 } |
                  if pulse { 0b1000 } else { 0 } |
                  if flash == 0 { 0 } else { (flash + 1) & 0b111 };
-    write_byte_to_cell(&mut f, 0xe4, e4_val)?;
-    write_colour(&mut f, REDCELL, red)?;
-    write_colour(&mut f, GREENCELL, green)?;
-    write_colour(&mut f, BLUECELL, blue)?;
+    write_byte_to_cell(f, 0xe4, e4_val)?;
+    write_colour(f, REDCELL, red)?;
+    write_colour(f, GREENCELL, green)?;
+    write_colour(f, BLUECELL, blue)?;
 
-    write_byte_to_cell(&mut f, 0xfe, step_duration as u8)?;
+    write_byte_to_cell(f, 0xfe, step_duration as u8)?;
     let ff_val = (step_duration >> 8) as u8 & 1 |
                  0b10 | // if 0 disable lights on rgb header only, not on board
                  if invs.contains(&"b") { 0b10000 } else { 0 } |
                  if invs.contains(&"g") { 0b01000 } else { 0 } |
                  if invs.contains(&"r") { 0b00100 } else { 0 };
-    write_byte_to_cell(&mut f, 0xff, ff_val)?;
+    write_byte_to_cell(f, 0xff, ff_val)?;
 
-    // Disable the advanced mode.
-    outb(&mut f, PORT1, 0xAA)?;
     Ok(())
+}
+
+/// Wrapper which enables and disables the advanced mode
+fn run_wrap<'a>(matches: ArgMatches<'a>) -> Result<()> {
+    let mut f = fs::OpenOptions::new().read(true).write(true).open("/dev/port")
+        .chain_err(|| { "could not open /dev/port; try sudo?" })?;
+    // Enable the advanced mode.
+    outb(&mut f, PORT1, 0x87).chain_err(|| "could not enable advanced mode")?;
+    outb(&mut f, PORT1, 0x87).chain_err(|| "could not enable advanced mode")?;
+    let r = run(&mut f, matches);
+    // Disable the advanced mode.
+    outb(&mut f, PORT1, 0xAA).chain_err(|| "could not disable advanced mode")?;
+    r.chain_err(|| "could not set the colour")
 }
 
 fn main() {
@@ -177,7 +182,7 @@ fn main() {
              .help("ignore the result of sI/O identification check"))
         .get_matches();
 
-    ::std::process::exit(if let Err(e) = run(matches) {
+    ::std::process::exit(if let Err(e) = run_wrap(matches) {
         let _ = writeln!(::std::io::stderr(), "error: {}", e);
         for e in e.iter().skip(1) {
             let _ = writeln!(::std::io::stderr(), "    caused by: {}", e);

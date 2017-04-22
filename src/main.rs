@@ -10,12 +10,16 @@
 //! .  |
 //! .  |
 //! .  |
-//! E0 | XX XX XX XX  PX XX XX XX  XX XX XX XX  XX XX XX XX
+//! E0 | EE XX XX XX  PX XX XX XX  XX XX XX XX  XX XX XX XX
 //! F0 | RR RR RR RR  GG GG GG GG  BB BB BB BB  XX XX TT TX
 //!     --------------------------------------------------
 //!      00 01 02 03  04 05 06 07  08 09 0A 0B  0C 0D 0E 0F
 //!
 //! Here:
+//!
+//! `EE` – firstly sets RGB to enabled. If value = `0` disabled. If value = `e0` enabled… or
+//! something. This probably configures the RGB header in some way, no idea what the value means
+//! yet.
 //!
 //! `R` - intensity of the red colour
 //! `G` - intensity of the green colour
@@ -114,17 +118,22 @@ fn run<'a>(f: &mut fs::File, base_port: u16, matches: ArgMatches<'a>) -> Result<
         }
     }
 
+
     // Select the 0x12th bank.
     outb(f, base_port, 0x07)?;
     outb(f, base_port + 1, RGB_BANK)?;
+
+    // Check if RGB control enabled?
+    outb(f, base_port, 0xe0)?;
+    let d = inb(f, base_port + 1)?;
+    if d & 0xe0 != 0xe0 {
+        outb(f, base_port + 1, 0xe0 | (d & !0xe0))?;
+    }
 
     let e4_val = if disable { 1 } else { 0 } |
                  if pulse { 0b1000 } else { 0 } |
                  if flash == 0 { 0 } else { (flash + 1) & 0b111 };
     write_byte_to_cell(f, base_port, 0xe4, e4_val)?;
-    write_colour(f, base_port, REDCELL, red)?;
-    write_colour(f, base_port, GREENCELL, green)?;
-    write_colour(f, base_port, BLUECELL, blue)?;
 
     write_byte_to_cell(f, base_port, 0xfe, step_duration as u8)?;
     let ff_val = (step_duration >> 8) as u8 & 1 |
@@ -133,6 +142,10 @@ fn run<'a>(f: &mut fs::File, base_port: u16, matches: ArgMatches<'a>) -> Result<
                  if invs.contains(&"g") { 0b01000 } else { 0 } |
                  if invs.contains(&"r") { 0b00100 } else { 0 };
     write_byte_to_cell(f, base_port, 0xff, ff_val)?;
+
+    write_colour(f, base_port, REDCELL, red)?;
+    write_colour(f, base_port, GREENCELL, green)?;
+    write_colour(f, base_port, BLUECELL, blue)?;
 
     Ok(())
 }
@@ -147,6 +160,28 @@ fn run_wrap<'a>(matches: ArgMatches<'a>) -> Result<()> {
     // Enable the advanced mode.
     outb(&mut f, base_port, 0x87).chain_err(|| "could not enable advanced mode")?;
     outb(&mut f, base_port, 0x87).chain_err(|| "could not enable advanced mode")?;
+
+    // These are something the built-in app does during initialization…
+    // Purpose unclear
+    // outb(&mut f, base_port, 0x07)?;
+    // outb(&mut f, base_port + 1, 0x0B)?;
+    // outb(&mut f, base_port, 0x60)?;
+    // let a = inb(&mut f, base_port + 1)?;
+    // outb(&mut f, base_port, 0x61)?;
+    // let b = inb(&mut f, base_port + 1)?;
+    // println!("{:x} {:x}", a, b);
+
+    // purpose unclear
+    // outb(&mut f, base_port, 0x07)?;
+    // outb(&mut f, base_port + 1, 0x09)?;
+    // outb(&mut f, base_port, 0x2c)?;
+    // let c = inb(&mut f, base_port + 1)?;
+    // println!("{:x}", c);
+
+    // enables RGB? Nope...
+    // outb(&mut f, base_port, 0x2c)?;
+    // outb(&mut f, base_port + 1, 0x11)?;
+
     let r = run(&mut f, base_port, matches);
     // Disable the advanced mode.
     outb(&mut f, base_port, 0xAA).chain_err(|| "could not disable advanced mode")?;

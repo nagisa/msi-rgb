@@ -17,9 +17,15 @@
 //!
 //! Here:
 //!
-//! `EE` – firstly sets RGB to enabled. If value = `0` disabled. If value = `e0` enabled… or
-//! something. This probably configures the RGB header in some way, no idea what the value means
-//! yet.
+//! `EE` – firstly sets RGB to enabled.
+//!
+//! Purpose of following three most significant bits in `EE` is known:
+//!
+//! `0b10000000` - unknown
+//! `0b01000000` - unknown
+//! `0b00100000` - unknown
+//!
+//!
 //!
 //! `R` - intensity of the red colour
 //! `G` - intensity of the green colour
@@ -171,16 +177,14 @@ fn run_wrap<'a>(matches: ArgMatches<'a>) -> Result<()> {
     // let b = inb(&mut f, base_port + 1)?;
     // println!("{:x} {:x}", a, b);
 
-    // purpose unclear
-    // outb(&mut f, base_port, 0x07)?;
-    // outb(&mut f, base_port + 1, 0x09)?;
-    // outb(&mut f, base_port, 0x2c)?;
-    // let c = inb(&mut f, base_port + 1)?;
-    // println!("{:x}", c);
-
-    // enables RGB? Nope...
-    // outb(&mut f, base_port, 0x2c)?;
-    // outb(&mut f, base_port + 1, 0x11)?;
+    // Without this pulsing does not work
+    outb(&mut f, base_port, 0x07)?;
+    outb(&mut f, base_port + 1, 0x09)?;
+    outb(&mut f, base_port, 0x2c)?;
+    let c = inb(&mut f, base_port + 1)?;
+    if c & 0x10 != 0x10 {
+        outb(&mut f, base_port + 1, c | 0x10)?;
+    }
 
     let r = run(&mut f, base_port, matches);
     // Disable the advanced mode.

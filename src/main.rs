@@ -164,6 +164,26 @@ fn run<'a>(f: &mut fs::File, base_port: u16, matches: ArgMatches<'a>) -> Result<
     Ok(())
 }
 
+fn print_all(f: &mut fs::File, base_port: u16) -> Result<()> {
+    for &(bank, s, e) in &[(RGB_BANK, 0xd0, 0x100u16), (0x09, 0x20, 0x40), (0x0b, 0x60, 0x70)] {
+        println!("Bank {:02x} ({:02x}...{:02x}):", bank, s, e);
+        outb(f, base_port, 0x07)?;
+        outb(f, base_port + 1, bank)?;
+
+        for x in s..e {
+            let x = x as u8;
+            outb(f, base_port, x)?;
+            let d = inb(f, base_port + 1)?;
+            if x & 0xf == 0xf {
+                println!("{:02x}", d);
+            } else {
+                print!("{:02x} ", d);
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Wrapper which enables and disables the advanced mode
 fn run_wrap<'a>(matches: ArgMatches<'a>) -> Result<()> {
     let base_port = u16::from_str_radix(matches.value_of("BASEPORT")
@@ -184,6 +204,9 @@ fn run_wrap<'a>(matches: ArgMatches<'a>) -> Result<()> {
     // outb(&mut f, base_port, 0x61)?;
     // let b = inb(&mut f, base_port + 1)?;
     // println!("{:x} {:x}", a, b);
+    if matches.is_present("PRINT")  {
+        print_all(&mut f, base_port)?;
+    }
 
     let r = run(&mut f, base_port, matches);
     // Disable the advanced mode.
@@ -222,6 +245,8 @@ fn main() {
              .help("ignore the result of sI/O identification check"))
         .arg(Arg::with_name("BASEPORT").long("base-port").default_value("4e")
              .help("base port to use. Values known to be in use are 4e and 2e"))
+        .arg(Arg::with_name("PRINT").long("print-current")
+             .help("print the current values of the interesting registers"))
         .get_matches();
 
     ::std::process::exit(if let Err(e) = run_wrap(matches) {

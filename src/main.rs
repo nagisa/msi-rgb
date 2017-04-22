@@ -125,12 +125,12 @@ fn run<'a>(f: &mut fs::File, base_port: u16, matches: ArgMatches<'a>) -> Result<
     }
 
     // Without this pulsing does not work
-    outb(&mut f, base_port, 0x07)?;
-    outb(&mut f, base_port + 1, 0x09)?;
-    outb(&mut f, base_port, 0x2c)?;
-    let c = inb(&mut f, base_port + 1)?;
+    outb(f, base_port, 0x07)?;
+    outb(f, base_port + 1, 0x09)?;
+    outb(f, base_port, 0x2c)?;
+    let c = inb(f, base_port + 1)?;
     if c & 0x10 != 0x10 {
-        outb(&mut f, base_port + 1, c | 0x10)?;
+        outb(f, base_port + 1, c | 0x10)?;
     }
 
     // Select the 0x12th bank.

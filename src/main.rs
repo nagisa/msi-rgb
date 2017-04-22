@@ -17,14 +17,14 @@
 //!
 //! Here:
 //!
-//! `EE` – firstly sets RGB to enabled.
+//! Purpose of following bits in `EE` is known:
 //!
-//! Purpose of following three most significant bits in `EE` is known:
+//! `0b10000000` - red channel can handle 16 levels
+//! `0b01000000` - green channel can handle 16 levels
+//! `0b00100000` - blue channel can handle 16 levels
 //!
-//! `0b10000000` - unknown
-//! `0b01000000` - unknown
-//! `0b00100000` - unknown
-//!
+//! If the corresponding bit is `0`, the channel always receives the maximum "brightness",
+//! regardless of setting.
 //!
 //!
 //! `R` - intensity of the red colour

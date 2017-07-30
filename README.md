@@ -33,6 +33,12 @@ You’ll need root to run this program:
 sudo ./target/release/msi-rgb 00000000 FFFFFFFF 00000000 # for green
 ```
 
+The hexa numbers represent each color as a sequence *in time* per byte so 4 change of colors.
+
+```
+sudo ./target/release/msi-rgb FF000000 00FF0000 0000FF00 # this makes red then green then blue then off then red etc..
+```
+
 Run following for more options:
 
 ```

@@ -8,7 +8,7 @@ This utility not only works on any linux system you find around, it also is much
 the 7 colours MSI’s own Gaming App. Futhermore, unlike the MSI’s utility, this does not make your
 system vulnerable to anybody who cares to fiddle around the system.
 
-* Only UNIX where /dev/port matches the behaviour of Linux’s /dev/port (might work on WSL?);
+* Linux (/dev/port, might work on WSL?) or FreeBSD (/dev/io);
 * Only MSI motherboards with NCT6795D super I/O chip;
   * Run a recent version of sensors-detect to check if you have this chip;
 * No warranty whatsoever (read the license);

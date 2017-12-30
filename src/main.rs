@@ -50,15 +50,22 @@
 extern crate clap;
 #[macro_use]
 extern crate error_chain;
+#[macro_use]
+#[cfg(target_os="freebsd")]
+extern crate nix;
 
-use std::io::{self, Seek, Write, Read};
+mod platform;
+
+use std::io::Write;
 use std::fs;
 use clap::{Arg, App, ArgMatches};
+use platform::{open_device, inb, outb};
 
 error_chain! {
     foreign_links {
         Io(::std::io::Error);
         Parse(::std::num::ParseIntError);
+        Nix(::nix::Error) #[cfg(target_os="freebsd")];
     }
 }
 
@@ -72,25 +79,12 @@ const REDCELL: u8 = 0xf0;
 const GREENCELL: u8 = 0xf4;
 const BLUECELL: u8 = 0xf8;
 
-fn inb(f: &mut fs::File, port: u16) -> io::Result<u8> {
-    let mut d = [0u8];
-    f.seek(io::SeekFrom::Start(port.into()))?;
-    f.read(&mut d)?;
-    Ok(d[0])
-}
-
-fn outb(f: &mut fs::File, port: u16, data: u8) -> io::Result<()> {
-    f.seek(io::SeekFrom::Start(port.into()))?;
-    f.write(&[data])?;
-    Ok(())
-}
-
-fn write_byte_to_cell(f: &mut fs::File, base_port: u16, cell: u8, data: u8) -> io::Result<()> {
+fn write_byte_to_cell(f: &mut fs::File, base_port: u16, cell: u8, data: u8) -> Result<()> {
     outb(f, base_port, cell)?;
     outb(f, base_port + 1, data)
 }
 
-fn write_colour(f: &mut fs::File, base_port: u16, cell_offset: u8, data: u32) -> io::Result<()> {
+fn write_colour(f: &mut fs::File, base_port: u16, cell_offset: u8, data: u32) -> Result<()> {
     write_byte_to_cell(f, base_port, cell_offset, (data >> 24) as u8)?;
     write_byte_to_cell(f, base_port, cell_offset + 1, (data >> 16) as u8)?;
     write_byte_to_cell(f, base_port, cell_offset + 2, (data >> 8) as u8)?;
@@ -189,8 +183,7 @@ fn run_wrap<'a>(matches: ArgMatches<'a>) -> Result<()> {
     let base_port = u16::from_str_radix(matches.value_of("BASEPORT")
                                                .expect("bug: BASEPORT argument"), 16)?;
 
-    let mut f = fs::OpenOptions::new().read(true).write(true).open("/dev/port")
-        .chain_err(|| { "could not open /dev/port; try sudo?" })?;
+    let mut f = open_device()?;
     // Enable the advanced mode.
     outb(&mut f, base_port, 0x87).chain_err(|| "could not enable advanced mode")?;
     outb(&mut f, base_port, 0x87).chain_err(|| "could not enable advanced mode")?;

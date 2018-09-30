@@ -11,8 +11,8 @@
 //! .  |
 //! .  |
 //! E0 | EE XX XX XX  PX XX XX XX  XX XX XX XX  XX XX XX XX
-//! F0 | RR RR RR RR  GG GG GG GG  BB BB BB BB  XX XX TT TX
-//!     --------------------------------------------------
+//! F0 | RR RR RR RR  GG GG GG GG  BB BB BB BB  XX XX TT TT
+//!     ---------------------------------------------------
 //!      00 01 02 03  04 05 06 07  08 09 0A 0B  0C 0D 0E 0F
 //!
 //! Here:
@@ -32,8 +32,8 @@
 //! `B` - intensity of the blue colour
 //!
 //! There’s 8 distinct steps that can be specified, hence the four instances of `RR`, `GG` and
-//! `BB`. These colours change every given interval specified in the `TTT` bytes. TTT has the bit
-//! format like this: `bgrdt tttt tttt`
+//! `BB`. These colours change every given interval specified in the `TTTT` bytes. TTTT has the bit
+//! format like this: `fffb grdt tttt tttt`
 //!
 //! Here `t` bits are a duration between changes from one colour to another (takes the next column
 //! of RR GG BB);
@@ -41,6 +41,9 @@
 //! `d` bit specifies whether the RGB header is turned on (distinct from the motherboard lights).;
 //!
 //! `bgr` invert the intensity (`F` is 0%, `0` is 100%) for blue, green and red channels
+//! respectively.
+//!
+//! `fff` if set to 1 disable some weird fade-in behaviour for blue, green and red channels
 //! respectively.
 //!
 //! `P` here is another bitmask of the form `pbbb`, where `p` specifies whether smooth pulsing
@@ -71,8 +74,6 @@ error_chain! {
 
 const RGB_BANK: u8 = 0x12;
 const NCT6795D_MASK: u16 = 0xD350;
-
-
 const REG_DEVID_MSB: u8 = 0x20;
 const REG_DEVID_LSB: u8 = 0x21;
 const REDCELL: u8 = 0xf0;
@@ -102,6 +103,7 @@ fn run<'a>(f: &mut fs::File, base_port: u16, matches: ArgMatches<'a>) -> Result<
     let step_duration = matches.value_of("STEPDURATION").expect("bug: STEPDURATION argument")
                                .parse::<u16>()?;
     let invs = matches.values_of("INVHALF").map(|i| i.collect()).unwrap_or(Vec::new());
+    let fade_in = matches.values_of("FADE_IN").map(|i| i.collect()).unwrap_or(Vec::new());
 
     // Check if indeed a NCT6795D
     if !ignore {
@@ -144,11 +146,19 @@ fn run<'a>(f: &mut fs::File, base_port: u16, matches: ArgMatches<'a>) -> Result<
     write_byte_to_cell(f, base_port, 0xe4, e4_val)?;
 
     write_byte_to_cell(f, base_port, 0xfe, step_duration as u8)?;
-    let ff_val = (step_duration >> 8) as u8 & 1 |
+
+
+    let ff_fade_in_val = 0b11100000u8 & // no fading in at all.
+        if fade_in.contains(&"b") { !0b10000000 } else { !0 } &
+        if fade_in.contains(&"g") { !0b01000000 } else { !0 } &
+        if fade_in.contains(&"r") { !0b00100000 } else { !0 };
+    let ff_invert_val = 0u8 |
+        if invs.contains(&"b") { 0b00010000 } else { 0 } |
+        if invs.contains(&"g") { 0b00001000 } else { 0 } |
+        if invs.contains(&"r") { 0b00000100 } else { 0 } ;
+    let ff_val = (step_duration >> 8) as u8 & 0b1 | // The extra bit for step duration
                  0b10 | // if 0 disable lights on rgb header only, not on board
-                 if invs.contains(&"b") { 0b10000 } else { 0 } |
-                 if invs.contains(&"g") { 0b01000 } else { 0 } |
-                 if invs.contains(&"r") { 0b00100 } else { 0 };
+                 ff_invert_val | ff_fade_in_val;
     write_byte_to_cell(f, base_port, 0xff, ff_val)?;
 
     write_colour(f, base_port, REDCELL, red)?;
@@ -234,6 +244,9 @@ fn main() {
              .help("duration between blinks (from 0 to 6, 0 is always on, 6 is slowest)"))
         .arg(Arg::with_name("DISABLE").long("disable").short("x")
              .help("disable the RGB subsystem altogether"))
+        .arg(Arg::with_name("FADE_IN").long("fade-in").short("f").multiple(true)
+             .takes_value(true).possible_values(&["r","g","b"])
+             .help("Enable fade-in effect for specified channel(s) (only works on some boards)"))
         .arg(Arg::with_name("IGNORECHECK").long("ignore-check")
              .help("ignore the result of sI/O identification check"))
         .arg(Arg::with_name("BASEPORT").long("base-port").default_value("4e")

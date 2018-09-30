@@ -2,8 +2,6 @@ Utility for controlling RGB header on MSI boards
 
 [How this utility came to be](http://kazlauskas.me/entries/i-reverse-engineered-a-motherboard.html)
 
-**This utility seems to not work correctly on B350 TOMAHAWK boards correctly at the moment. See issues #2 and #6.**
-
 This utility not only works on any linux system you find around, it also is much more flexible than
 the 7 colours MSI’s own Gaming App. Futhermore, unlike the MSI’s utility, this does not make your
 system vulnerable to anybody who cares to fiddle around the system.

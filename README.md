@@ -12,6 +12,19 @@ system vulnerable to anybody who cares to fiddle around the system.
 * No warranty whatsoever (read the license);
   * If you find your board misbehaving, try clearing CMOS;
 
+# Working boards
+
+This is a list of reportedly working motherboards. If the tool works on your motherboard and it is
+not listed here, consider filling an issue or writing me an email and I’ll add it here.
+
+* B350 MORTAR ARCTIC
+* B350 TOMAHAWK
+* X470 GAMING PRO
+
+If your board is not working, and your motherboard is not [on this
+list](https://github.com/nagisa/msi-rgb/issues?q=is%3Aissue+is%3Aopen+label%3Aboard), a new issue
+would be greatly appreciated.
+
 # How to compile and run
 
 To compile this project you’ll need rustc and cargo. Get them at your package manager or

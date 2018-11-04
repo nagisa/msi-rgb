@@ -23,6 +23,7 @@ not listed here, consider filling an issue or writing me an email and I’ll add
 * H270 TOMAHAWK ARCTIC
 * X470 GAMING PRO
 * Z270 SLI PLUS
+* Z370 MORTAR
 
 If your board is not working, and your motherboard is not [on this
 list](https://github.com/nagisa/msi-rgb/issues?q=is%3Aissue+is%3Aopen+label%3Aboard), a new issue

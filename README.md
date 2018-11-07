@@ -19,6 +19,7 @@ not listed here, consider filling an issue or writing me an email and I’ll add
 
 * B350 MORTAR ARCTIC
 * B350 TOMAHAWK
+* B450 GAMING PLUS AC
 * H270 MORTAR ARCTIC
 * H270 TOMAHAWK ARCTIC
 * X470 GAMING PRO

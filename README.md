@@ -90,12 +90,12 @@ sudo ./target/release/msi-rgb 58e01c0d 504fdcb9 e4aa75eb --blink 2 -d 32
 
 [![animation of happyeaster](https://thumbs.gfycat.com/DirectBleakBuzzard-size_restricted.gif)](https://gfycat.com/DirectBleakBuzzard)
 
-## Hue wheel (t HUE, 0.9 SATURATION, 1.0 VALUE)
+## Hue wheel (t HUE, 0.9 SATURATION, 1.0 VALUE) (REQUIRES PYTHON)
 
 ![animation of hue wheel](https://thumbs.gfycat.com/ViciousGreenBittern-size_restricted.gif)
 
 ```
-echo -e "import colorsys, time, subprocess\ni=0\nwhile True:\n  subprocess.call(['target/release/msi-rgb', '-d511'] + map(lambda x: ('{0:01x}'.format(int(15*x)))*8, colorsys.hsv_to_rgb((i % 96.0) / 96.0, 0.9, 1)))\n  time.sleep(0.1)\n  i+=1" | sudo python -
+echo -e "import colorsys, time, subprocess\ni=0\nwhile True:\n  subprocess.call(['target/release/msi-rgb', '-d511'] + list(map(lambda x: ('{0:01x}'.format(int(15*x)))*8, colorsys.hsv_to_rgb((i % 96.0) / 96.0, 0.9, 1))))\n  time.sleep(0.1)\n  i+=1" | sudo python -
 ```
 
 # Implementation

@@ -73,7 +73,10 @@ error_chain! {
 }
 
 const RGB_BANK: u8 = 0x12;
-const NCT6795D_MASK: u16 = 0xD350;
+const VALID_MASKS: [u16; 2] = [
+    0xD350, // NCT6795
+    0xD450, // NCT6797
+];
 const REG_DEVID_MSB: u8 = 0x20;
 const REG_DEVID_LSB: u8 = 0x21;
 const REDCELL: u8 = 0xf0;
@@ -111,7 +114,10 @@ fn run<'a>(f: &mut fs::File, base_port: u16, matches: ArgMatches<'a>) -> Result<
         let msb = inb(f, base_port + 1)?;
         outb(f, base_port, REG_DEVID_LSB)?;
         let ident = (msb as u16) << 8 | inb(f, base_port + 1)? as u16;
-        if ident & 0xFFF0 != NCT6795D_MASK {
+        if matches.is_present("VERBOSE")  {
+            println!("Chip identifier is: {:x}", ident);
+        }
+        if !VALID_MASKS.contains(&{ident & 0xFFF0}) {
             let err: Result<()> = Err("`--ignore-check` flag, which would skip the check, \
                                        is not specified (may be dangerous); \
                                        also try `--base-port`".into());
@@ -207,7 +213,7 @@ fn run_wrap<'a>(matches: ArgMatches<'a>) -> Result<()> {
     // outb(&mut f, base_port, 0x61)?;
     // let b = inb(&mut f, base_port + 1)?;
     // println!("{:x} {:x}", a, b);
-    if matches.is_present("PRINT")  {
+    if matches.is_present("VERBOSE")  {
         print_all(&mut f, base_port)?;
     }
 
@@ -251,8 +257,8 @@ fn main() {
              .help("ignore the result of sI/O identification check"))
         .arg(Arg::with_name("BASEPORT").long("base-port").default_value("4e")
              .help("base port to use. Values known to be in use are 4e and 2e"))
-        .arg(Arg::with_name("PRINT").long("print-current")
-             .help("print the current values of the interesting registers"))
+        .arg(Arg::with_name("VERBOSE").long("verbose")
+             .help("print some interesting output that is useful for debugging"))
         .get_matches();
 
     ::std::process::exit(if let Err(e) = run_wrap(matches) {

@@ -10,7 +10,7 @@
 //! .  |
 //! .  |
 //! .  |
-//! E0 | EE XX XX XX  PX XX XX XX  XX XX XX XX  XX XX XX XX
+//! E0 | EE XX XX XX  XP XX XX XX  XX XX XX XX  XX XX XX XX
 //! F0 | RR RR RR RR  GG GG GG GG  BB BB BB BB  XX XX TT TT
 //!     ---------------------------------------------------
 //!      00 01 02 03  04 05 06 07  08 09 0A 0B  0C 0D 0E 0F
@@ -31,20 +31,25 @@
 //! `G` - intensity of the green colour
 //! `B` - intensity of the blue colour
 //!
-//! There’s 8 distinct steps that can be specified, hence the four instances of `RR`, `GG` and
-//! `BB`. These colours change every given interval specified in the `TTTT` bytes. TTTT has the bit
-//! format like this: `fffb grdt tttt tttt`
+//! There’s 8 distinct frames that can be specified, each defined by a 4 bit value for each color.
+//! When enumerating the frames from 0 to 7, then the sequence to be written into the four
+//! RR, GG, or BB bytes is: 10 32 54 76
+//!
+//! The frames change every given interval specified in the `TTTT` bytes. TTTT has the bit
+//! format like this: `tttttttt fffbgrdt`
 //!
 //! Here `t` bits are a duration between changes from one colour to another (takes the next column
-//! of RR GG BB);
+//! of RR GG BB). Bits 0-7 are stored in register 'FE', bit 8 in the least significant bit of 'FF'.;
 //!
 //! `d` bit specifies whether the RGB header is turned on (distinct from the motherboard lights).;
 //!
 //! `bgr` invert the intensity (`F` is 0%, `0` is 100%) for blue, green and red channels
 //! respectively.
 //!
-//! `fff` if set to 1 disable some weird fade-in behaviour for blue, green and red channels
-//! respectively.
+//! `fff` if set to 1 then the 4 frames of RR, GG, and BB bytes behave as described above.
+//! If set to 0 then a fade-in effect happens for blue, green and red channels respectively,
+//! but only when all 4 frames are set to 'ff' value and only on the NCT6795D-M chip
+//! found e.g. on the B350 Tomahawk board.
 //!
 //! `P` here is another bitmask of the form `pbbb`, where `p` specifies whether smooth pulsing
 //! behaviour is enabled. `bbb` specifies duration between blinks. If `bbb` is `001`,

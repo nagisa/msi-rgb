@@ -46,10 +46,10 @@
 //! `bgr` invert the intensity (`F` is 0%, `0` is 100%) for blue, green and red channels
 //! respectively.
 //!
-//! `fff` if set to 1 then the 4 frames of RR, GG, and BB bytes behave as described above.
-//! If set to 0 then a fade-in effect happens for blue, green and red channels respectively,
-//! but only when all 4 frames are set to 'ff' value and only on the NCT6795D-M chip
-//! found e.g. on the B350 Tomahawk board.
+//! `fff` if set to 1 then the 8 frames of the RR, GG, and BB bytes behave as described above.  If
+//! set to 0 then a fade-in effect happens for blue, green and red channels respectively, but only
+//! when all 8 frames are set to 'f' value and only on the NCT6795D-M chip found e.g. on the B350
+//! Tomahawk board.
 //!
 //! `P` here is another bitmask of the form `pbbb`, where `p` specifies whether smooth pulsing
 //! behaviour is enabled. `bbb` specifies duration between blinks. If `bbb` is `001`,

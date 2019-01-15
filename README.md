@@ -18,6 +18,7 @@ This is a list of reportedly working motherboards. If the tool works on your mot
 not listed here, consider filling an issue or writing me an email and I’ll add it here.
 
 * B350 MORTAR ARCTIC
+* B350 PC MATE
 * B350 TOMAHAWK
 * B450 GAMING PLUS AC
 * B450 MORTAR

@@ -20,6 +20,7 @@ not listed here, consider filling an issue or writing me an email and I’ll add
 * B350 MORTAR ARCTIC
 * B350 PC MATE
 * B350 TOMAHAWK
+* B360M GAMING PLUS
 * B450 GAMING PLUS AC
 * B450 MORTAR
 * B450 TOMAHAWK

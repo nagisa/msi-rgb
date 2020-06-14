@@ -32,10 +32,12 @@ not listed here, consider filling an issue or writing me an email and I’ll add
 * Z270 SLI PLUS
 * Z370 MORTAR
 * Z370 PC PRO
-
-If your board is not working, and your motherboard is not [on this
-list](https://github.com/nagisa/msi-rgb/issues?q=is%3Aissue+is%3Aopen+label%3Aboard), a new issue
-would be greatly appreciated.
+* Z270 GAMING M6 AC (confirmed to correctly disable LEDs only)
+* B450M Mortar Titanium (with [some caveats](https://github.com/nagisa/msi-rgb/issues/119))
+* B360 gaming plus ([colours inverted](https://github.com/nagisa/msi-rgb/issues/118))
+* Z390 Gaming Plus ([#116](https://github.com/nagisa/msi-rgb/issues/116))
+* b450m pro-vdh max ([#114](https://github.com/nagisa/msi-rgb/issues/114), [#109](https://github.com/nagisa/msi-rgb/issues/109))
+* B450M GAMING PLUS ([#112](https://github.com/nagisa/msi-rgb/issues/112))
 
 # How to compile and run
 

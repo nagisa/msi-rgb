@@ -1,3 +1,14 @@
+# USE [OpenRGB](https://gitlab.com/CalcProgrammer1/OpenRGB) INSTEAD
+
+This project is not actively maintained. No support for additional boards will be added.
+
+At the time of writing OpenRGB is actively maintained and supports variety of devices, including
+MSI boards with code adapted from this project. Just use that. If it doesn’t work, this tool won’t
+work either. If it doesn’t support functionality this tool does, consider porting similar
+functionality to OpenRGB.
+
+---
+
 Utility for controlling RGB header on MSI boards
 
 [How this utility came to be](http://kazlauskas.me/entries/i-reverse-engineered-a-motherboard.html)
@@ -12,10 +23,7 @@ system vulnerable to anybody who cares to fiddle around the system.
 * No warranty whatsoever (read the license);
   * If you find your board misbehaving, try clearing CMOS;
 
-# Working boards
-
-This is a list of reportedly working motherboards. If the tool works on your motherboard and it is
-not listed here, consider filling an issue or writing me an email and I’ll add it here.
+# Reportedly Working boards
 
 * B350 MORTAR ARCTIC
 * B350 PC MATE
